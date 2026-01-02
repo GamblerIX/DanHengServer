@@ -65,7 +65,7 @@ rm packages-microsoft-prod.deb
 
 # Install .NET SDK
 sudo apt-get update && \
-  sudo apt-get install -y dotnet-sdk-8.0
+  sudo apt-get install -y dotnet-sdk-9.0
 ```
 
 - Compile and run environment

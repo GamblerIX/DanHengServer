@@ -1,18 +1,31 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
+# 相关文件:
+# - Program/Program.csproj
+# - README.md
+
 name: .NET 发布
+
+env:
+  PROJECT_FILE: 'Program/Program.csproj'
+  TARGET_FRAMEWORK: 'net9.0'
+  DOTNET_VERSION: '9.0.x'
 
 on:
   workflow_dispatch:
     inputs:
+      tag:
+        description: '发布 Tag (如 v1.0.0)'
+        required: true
+        default: 'v3.7.0'
       name:
         description: '发布名称'
         required: true
-        default: ''
+        default: 'v3.7.0'
       body:
         description: '发布内容'
-        required: true
+        required: false
         default: ''
   
 jobs:
@@ -28,28 +41,28 @@ jobs:
     - name: 配置 .NET 环境
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: 还原依赖
       run: dotnet restore
 
     - name: 发布 win-x64
-      run: dotnet publish Program/Program.csproj -o Release/win-x64 -r win-x64 --self-contained false --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/win-x64 -r win-x64 --self-contained false --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 发布 linux-x64
-      run: dotnet publish Program/Program.csproj -o Release/linux-x64 -r linux-x64 --self-contained false --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-x64 -r linux-x64 --self-contained false --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 发布 linux-arm64
-      run: dotnet publish Program/Program.csproj -o Release/linux-arm64 -r linux-arm64 --self-contained false --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-arm64 -r linux-arm64 --self-contained false --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 发布 win-x64 (独立运行)
-      run: dotnet publish Program/Program.csproj -o Release/win-x64-self-contained -r win-x64 --self-contained true --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/win-x64-self-contained -r win-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 发布 linux-x64 (独立运行)
-      run: dotnet publish Program/Program.csproj -o Release/linux-x64-self-contained -r linux-x64 --self-contained true --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-x64-self-contained -r linux-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 发布 linux-arm64 (独立运行)
-      run: dotnet publish Program/Program.csproj -o Release/linux-arm64-self-contained -r linux-arm64 --self-contained true --framework net9.0 -p:PublishSingleFile=true
+      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-arm64-self-contained -r linux-arm64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
     - name: 移除 PDB 文件
       run: |
@@ -81,7 +94,7 @@ jobs:
       with:
         body_path: z/body.txt
         name: ${{ inputs.name }}
-        tag_name: Release-${{ github.sha }}
+        tag_name: ${{ inputs.tag }}
         token: ${{ secrets.GITHUB_TOKEN }}
         # upload except pdb file
         files: |

@@ -67,7 +67,7 @@ rm packages-microsoft-prod.deb
 
 # 安裝 .NET SDK
 sudo apt-get update && \
-  sudo apt-get install -y dotnet-sdk-8.0
+  sudo apt-get install -y dotnet-sdk-9.0
 ```
 
 - 編譯並運行環境
@@ -78,7 +78,7 @@ cd DanhengServer
 ./Gameserver
 ```
 **向 Microsoft 顯示其他系統版本**
-- [微軟教學](https://dotnet.microsoft.com/zh-tw/download/dotnet/thank-you/sdk-8.0.204-linux-x64-binaries)
+- [微軟教學](https://dotnet.microsoft.com/zh-tw/download/dotnet/9.0)
 
 ## ❓幫助
 
