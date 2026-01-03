@@ -22,7 +22,7 @@ on:
       name:
         description: '发布名称'
         required: true
-        default: 'v3.7.0'
+        default: 'V3.7.0'
       body:
         description: '发布内容'
         required: false
