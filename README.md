@@ -35,13 +35,13 @@
 
 ### 快速启动
 
-1. 在 [Action](https://github.com/StopWuyu/DanhengServer/actions) 下载可执行文件
-2. 打开下载完成的 `DanhengServer.zip` 解压至任意文件夹 __*最好是英文路径*__
+1. 在 [Releases](https://github.com/StopWuyu/DanhengServer/releases) 页面下载对应系统的压缩包（如 `win-x64-self-contained-v3.7.x.zip`）
+2. 将压缩包内容解压至任意文件夹 __*最好是英文路径*__
 
 > (可选) 在源代码的WebServer文件夹中下载 `certificate.p12` 使得以HTTPS模式启动 让你的传输更安全: )
 
-3. 运行GameServer.exe
-4. 运行代理 启动游戏 链接，享受！
+3. 运行 `DanhengServer.exe` (Windows) 或 `./DanhengServer` (Linux)
+4. 运行代理，启动游戏并连接，享受！
 
 ### 构建
 
@@ -76,7 +76,7 @@ sudo apt-get update && \
 git clone --recurse-submodules https://github.com/StopWuyu/DanhengServer.git
 cd DanhengServer
 .\dotnet build # 编译
-./Gameserver
+./DanhengServer
 ```
 **向 Microsoft 显示其他系统版本**
 - [微软教程](https://dotnet.microsoft.com/zh-cn/download/dotnet/9.0)

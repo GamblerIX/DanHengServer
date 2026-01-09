@@ -1,11 +1,8 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 # 相关文件:
 # - Program/Program.csproj
 # - README.md
 
-name: .NET 发布
+name: "发布版本 (Publish Release)"
 
 env:
   PROJECT_FILE: 'Program/Program.csproj'
@@ -13,80 +10,117 @@ env:
   DOTNET_VERSION: '9.0.x'
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
-      tag:
-        description: '发布 Tag (如 v1.0.0)'
+      version:
+        description: '版本号 (例如 v3.7.0). 手动触发时必填.'
         required: true
         default: 'v3.7.0'
-      name:
-        description: '发布名称'
-        required: true
-        default: 'V3.7.0'
-      body:
-        description: '发布内容'
-        required: false
-        default: ''
-  
+
 jobs:
   build:
+    name: 构建并发布
     runs-on: ubuntu-latest
     
     permissions:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: 配置 .NET 环境
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: 确定标签名称
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "IS_MANUAL=true" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "IS_MANUAL=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
 
-    - name: 还原依赖
-      run: dotnet restore
+      - name: 生成变更日志
+        id: changelog
+        run: |
+          # 获取上一个标签以生成差异日志
+          TAG_NAME="${{ steps.get_tag.outputs.TAG_NAME }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 ${TAG_NAME}^ 2>/dev/null || echo "")
+          
+          echo "上一个标签: $PREV_TAG"
+          
+          if [ -z "$PREV_TAG" ]; then
+             echo "未找到上一个标签。生成此版本之前的所有日志。"
+             git log --pretty=format:"- %h %s" > release_notes.md
+          else
+             if [ "${{ steps.get_tag.outputs.IS_MANUAL }}" == "true" ]; then
+                # 对于手动触发，比较上一个标签到 HEAD
+                echo "生成从 $PREV_TAG 到 HEAD 的日志"
+                git log ${PREV_TAG}..HEAD --pretty=format:"- %h %s" > release_notes.md
+             else
+                # 对于标签推送，比较上一个标签到当前标签
+                echo "生成从 $PREV_TAG 到 $TAG_NAME 的日志"
+                git log ${PREV_TAG}..${TAG_NAME} --pretty=format:"- %h %s" > release_notes.md
+             fi
+          fi
+          
+          # 检查文件是否为空
+          if [ ! -s release_notes.md ]; then
+             echo "未发现变更。" > release_notes.md
+          fi
+        shell: bash
 
+      - name: 配置 .NET 环境
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: 发布 win-x64 (独立运行)
-      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/win-x64-self-contained -r win-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
+      - name: 还原依赖
+        run: dotnet restore
 
-    - name: 发布 linux-x64 (独立运行)
-      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-x64-self-contained -r linux-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
+      - name: 发布 win-x64 (独立运行)
+        run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/win-x64-self-contained -r win-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
-    - name: 发布 linux-arm64 (独立运行)
-      run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-arm64-self-contained -r linux-arm64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
+      - name: 发布 linux-x64 (独立运行)
+        run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-x64-self-contained -r linux-x64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
-    - name: 移除 PDB 文件
-      run: |
+      - name: 发布 linux-arm64 (独立运行)
+        run: dotnet publish ${{ env.PROJECT_FILE }} -o Release/linux-arm64-self-contained -r linux-arm64 --self-contained true --framework ${{ env.TARGET_FRAMEWORK }} -p:PublishSingleFile=true
 
-           rm -rf Release/win-x64-self-contained/*.pdb
-           rm -rf Release/linux-x64-self-contained/*.pdb
-           rm -rf Release/linux-arm64-self-contained/*.pdb
+      - name: 移除 PDB 文件
+        run: |
+          rm -rf Release/win-x64-self-contained/*.pdb
+          rm -rf Release/linux-x64-self-contained/*.pdb
+          rm -rf Release/linux-arm64-self-contained/*.pdb
 
-    - name: 压缩文件
-      run: |
-           mkdir z
-           cd Release
-           
-           TAG="${{ inputs.tag }}"
-           zip -r ../z/win-x64-self-contained-$TAG.zip win-x64-self-contained/
-           zip -r ../z/linux-x64-self-contained-$TAG.zip linux-x64-self-contained/
-           zip -r ../z/linux-arm64-self-contained-$TAG.zip linux-arm64-self-contained/
-           cd ..
+      - name: 压缩文件
+        id: archive
+        run: |
+          TAG="${{ steps.get_tag.outputs.TAG_NAME }}"
+          mkdir z
+          cd Release
+          zip -r ../z/win-x64-self-contained-$TAG.zip win-x64-self-contained/
+          zip -r ../z/linux-x64-self-contained-$TAG.zip linux-x64-self-contained/
+          zip -r ../z/linux-arm64-self-contained-$TAG.zip linux-arm64-self-contained/
+          cd ..
+        shell: bash
 
-    - name: 写入发布内容
-      run: |
-           echo -e "${{ inputs.body }}" > z/body.txt
-
-    - name: 发布 Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: z/body.txt
-        name: ${{ inputs.name }}
-        tag_name: ${{ inputs.tag }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-        # upload except pdb file
-        files: |
-          z/win-x64-self-contained-${{ inputs.tag }}.zip
-          z/linux-x64-self-contained-${{ inputs.tag }}.zip
-          z/linux-arm64-self-contained-${{ inputs.tag }}.zip
+      - name: 创建发布
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.TAG_NAME }}
+          name: 发布 ${{ steps.get_tag.outputs.TAG_NAME }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          make_latest: true
+          files: |
+            z/win-x64-self-contained-${{ steps.get_tag.outputs.TAG_NAME }}.zip
+            z/linux-x64-self-contained-${{ steps.get_tag.outputs.TAG_NAME }}.zip
+            z/linux-arm64-self-contained-${{ steps.get_tag.outputs.TAG_NAME }}.zip

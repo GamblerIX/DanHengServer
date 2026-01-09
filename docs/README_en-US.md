@@ -35,10 +35,10 @@ Some functions for the game might not support at the first time when new "Anime 
 
 ### Quick Start
 
-1. Download the executable file from [Action](https://github.com/EggLinks/DanhengServer/actions)
+1. Download the executable file from [Releases](https://github.com/StopWuyu/DanhengServer/releases)
 2. Open the downloaded `DanhengServer.zip` and extract it to any folder __*preferably an English path__
    (Optional) Download the `certificate.p12` from the WebServer folder of the source code to enable HTTPS mode, ensuring a more secure traffic
-3. Run GameServer.exe
+3. Run `DanhengServer.exe` (Windows) or `./DanhengServer` (Linux)
 4. Run proxy, start the game, and enjoy!
 
 ### Build
@@ -73,7 +73,7 @@ sudo apt-get update && \
 git clone --recurse-submodules https://github.com/EggLinks/DanhengServer.git
 cd DanhengServer
 .\dotnet build # compile
-./Gameserver
+./DanhengServer
 ```
 
 ## ❓ Help

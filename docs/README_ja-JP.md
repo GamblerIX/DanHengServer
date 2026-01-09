@@ -34,13 +34,13 @@
 
 ### クイックスタート
 
-1. [Action](https://github.com/StopWuyu/DanhengServer/actions) で実行可能ファイルをダウンロードする
+1. [Releases](https://github.com/StopWuyu/DanhengServer/releases) で実行可能ファイルをダウンロードする
 2. ダウンロードが完了した` DanhengServer.zip `を開いて任意のフォルダに解凍します __*英文パスが望ましい*__
 
 > (オプション) ソースコードのWebServerフォルダに` certificate.p 12 `をダウンロードすることで、HTTPSモードで起動して転送をより安全にすることができます: )
 
-3. GameServer.exeの実行
-4. エージェント起動ゲームの実行
+3. `DanhengServer.exe` (Windows) または `./DanhengServer` (Linux) の実行
+4. プロキシの実行、ゲームの起動、接続、お楽しみ下さい！
 
 ### 構築＃コウチク＃
 
@@ -77,7 +77,7 @@ sudo apt-get update && \
 git clone --recurse-submodules https://github.com/StopWuyu/DanhengServer.git
 cd DanhengServer
 .\dotnet build # コンパイル
-./Gameserver
+./DanhengServer
 ```
 **他のシステムバージョンはMicrosoftに表示してください**
 - [Microsoftのチュートリアル](https://dotnet.microsoft.com/zh-cn/download/dotnet/9.0)
